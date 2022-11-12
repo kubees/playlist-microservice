@@ -28,4 +28,4 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           push: true
-          tags: ahmedgrati/playlist-ms:${GITHUB_REF##*/} 
+          tags: ahmedgrati/playlist-ms:${{ github.head_ref }}
