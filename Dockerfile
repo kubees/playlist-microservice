@@ -7,9 +7,9 @@ COPY go.sum /src/
 COPY go.mod /src/
 RUN go mod download
 
-COPY app.go /src
+COPY *.go /src
 
-RUN go build -o app
+RUN go build -o app *.go
 
 FROM alpine:3.12
 
