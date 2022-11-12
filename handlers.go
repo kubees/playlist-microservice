@@ -21,7 +21,8 @@ func GetPlaylistsHandler(w http.ResponseWriter, r *http.Request, p httprouter.Pa
 	playlists := []Playlist{}
 	err := json.Unmarshal([]byte(playlistsJson), &playlists)
 	if err != nil {
-		panic(err)
+		fmt.Printf("Error: %v\n", err)
+		return
 	}
 
 	//get videos for each playlist from videos api
@@ -32,7 +33,8 @@ func GetPlaylistsHandler(w http.ResponseWriter, r *http.Request, p httprouter.Pa
 
 	playlistsBytes, err := json.Marshal(playlists)
 	if err != nil {
-		panic(err)
+		fmt.Printf("Error: %v\n", err)
+		return
 	}
 
 	reader := bytes.NewReader(playlistsBytes)
