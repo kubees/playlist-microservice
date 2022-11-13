@@ -18,7 +18,7 @@ func GetPlaylistsHandler(w http.ResponseWriter, r *http.Request, p httprouter.Pa
 	Cors(w)
 	playlistsJson := GetPlaylists()
 
-	playlists := []Playlist{}
+	var playlists []Playlist
 	err := json.Unmarshal([]byte(playlistsJson), &playlists)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
