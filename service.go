@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/go-redis/redis/v8"
 	"io/ioutil"
 	"net/http"
 )
@@ -10,9 +11,11 @@ import (
 func GetPlaylists() (response string) {
 	playlistData, err := rdb.Get(ctx, "playlists").Result()
 
-	if err != nil {
+	if err == redis.Nil {
+		fmt.Println("there's no playlists right now!")
+		return "[]"
+	} else if err != nil {
 		fmt.Println(err)
-		fmt.Println("error occured retrieving playlists from Redis")
 		return "[]"
 	}
 
@@ -20,7 +23,7 @@ func GetPlaylists() (response string) {
 }
 
 func GetVideosOfPlaylists(playlist Playlist) []Videos {
-	vs := []Videos{}
+	var vs []Videos
 	for vi := range playlist.Videos {
 
 		v := Videos{}

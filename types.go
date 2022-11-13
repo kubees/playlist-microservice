@@ -10,6 +10,6 @@ type Videos struct {
 	Id          string `json:"id"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
-	Imageurl    string `json:"imageurl"`
+	ImageURL    string `json:"imageurl"`
 	Url         string `json:"url"`
 }
