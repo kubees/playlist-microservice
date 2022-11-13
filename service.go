@@ -24,7 +24,7 @@ func GetVideosOfPlaylists(playlist Playlist) []Videos {
 	for vi := range playlist.Videos {
 
 		v := Videos{}
-		videoResp, err := http.Get(fmt.Sprintf("http://%v:%v/", videos_api_host, videos_api_port) + playlist.Videos[vi].Id)
+		videoResp, err := http.Get(fmt.Sprintf("http://%v:%v/", videosApiHost, videosApiPort) + playlist.Videos[vi].Id)
 
 		if err != nil {
 			fmt.Println(err)

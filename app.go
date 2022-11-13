@@ -12,16 +12,16 @@ import (
 )
 
 var environment = os.Getenv("ENVIRONMENT")
-var redis_host = os.Getenv("REDIS_HOST")
-var redis_port = os.Getenv("REDIS_PORT")
-var videos_api_host = os.Getenv("VIDEOS_API_HOST")
-var videos_api_port = os.Getenv("VIDEOS_API_PORT")
+var redisHost = os.Getenv("REDIS_HOST")
+var redisPort = os.Getenv("REDIS_PORT")
+var videosApiHost = os.Getenv("VIDEOS_API_HOST")
+var videosApiPort = os.Getenv("VIDEOS_API_PORT")
 var ctx = context.Background()
 var rdb *redis.Client
 
 func main() {
 	r := redis.NewClient(&redis.Options{
-		Addr: redis_host + ":" + redis_port,
+		Addr: redisHost + ":" + redisPort,
 		DB:   0,
 	})
 	rdb = r
@@ -31,7 +31,6 @@ func main() {
 	router.GET("/healthz", HealthzHandler)
 
 	router.GET("/", GetPlaylistsHandler)
-
 
 	fmt.Println("Running...")
 	log.Fatal(http.ListenAndServe(":10010", router))
