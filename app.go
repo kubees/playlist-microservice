@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/julienschmidt/httprouter"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -33,5 +34,6 @@ func main() {
 	router.GET("/", GetPlaylistsHandler)
 
 	fmt.Println("Running...")
+	http.Handle("/metrics", promhttp.Handler())
 	log.Fatal(http.ListenAndServe(":10010", router))
 }
