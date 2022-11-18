@@ -15,8 +15,11 @@ func HealthzHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params)
 }
 
 func GetPlaylistsHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	// to enable tracing:
+	ctx := r.Context()
+
 	Cors(w)
-	playlistsJson := GetPlaylists()
+	playlistsJson := GetPlaylists(ctx)
 
 	var playlists []Playlist
 	err := json.Unmarshal([]byte(playlistsJson), &playlists)
@@ -24,6 +27,7 @@ func GetPlaylistsHandler(w http.ResponseWriter, r *http.Request, p httprouter.Pa
 		fmt.Printf("Error: %v\n", err)
 		return
 	}
+	PlaylistsMetrics(playlists)
 
 	//get videos for each playlist from videos api
 	for pi := range playlists {
