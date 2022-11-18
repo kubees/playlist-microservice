@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/go-redis/redis/v8"
@@ -8,7 +9,7 @@ import (
 	"net/http"
 )
 
-func GetPlaylists() (response string) {
+func GetPlaylists(ctx context.Context) (response string) {
 	playlistData, err := rdb.Get(ctx, "playlists").Result()
 
 	if err == redis.Nil {
@@ -18,7 +19,6 @@ func GetPlaylists() (response string) {
 		fmt.Println(err)
 		return "[]"
 	}
-
 	return playlistData
 }
 

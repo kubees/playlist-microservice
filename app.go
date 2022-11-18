@@ -1,16 +1,22 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"net/http"
-	"os"
-
-	"github.com/go-redis/redis/v8"
+	"github.com/go-redis/redis/extra/redisotel/v9"
+	"github.com/go-redis/redis/v9"
 	"github.com/julienschmidt/httprouter"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
+	metrics "github.com/slok/go-http-metrics/metrics/prometheus"
+	"github.com/slok/go-http-metrics/middleware"
+	httproutermiddleware "github.com/slok/go-http-metrics/middleware/httprouter"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 )
+
+const metricsAddr = ":8000"
 
 var environment = os.Getenv("ENVIRONMENT")
 var redisHost = os.Getenv("REDIS_HOST")
@@ -18,24 +24,50 @@ var redisPort = os.Getenv("REDIS_PORT")
 var videosApiHost = os.Getenv("VIDEOS_API_HOST")
 var videosApiPort = os.Getenv("VIDEOS_API_PORT")
 var password = os.Getenv("PASSWORD")
-var ctx = context.Background()
-var rdb *redis.Client
+var rdb redis.UniversalClient
 
 func main() {
-	r := redis.NewClient(&redis.Options{
-		Addr: redisHost + ":" + redisPort,
-		DB:   0,
+	r := redis.NewUniversalClient(&redis.UniversalOptions{
+		Addrs:    []string{redisHost + ":" + redisPort},
+		DB:       0,
 		Password: password,
 	})
 	rdb = r
+	// Enable tracing instrumentation.
+	if err := redisotel.InstrumentTracing(r); err != nil {
+		panic(err)
+	}
+
+	// Enable metrics instrumentation.
+	if err := redisotel.InstrumentMetrics(r); err != nil {
+		panic(err)
+	}
+
+	// Create our middleware.
+	mdlw := middleware.New(middleware.Config{
+		Recorder: metrics.NewRecorder(metrics.Config{}),
+	})
 
 	router := httprouter.New()
 
-	router.GET("/healthz", HealthzHandler)
+	router.GET("/healthz", httproutermiddleware.Handler("/healthz", HealthzHandler, mdlw))
 
-	router.GET("/", GetPlaylistsHandler)
+	router.GET("/", httproutermiddleware.Handler("/", GetPlaylistsHandler, mdlw))
 
 	fmt.Println("Running...")
-	http.Handle("/metrics", promhttp.Handler())
+	// Serve our metrics.
+	go func() {
+		log.Printf("metrics listening at %s", metricsAddr)
+		if err := http.ListenAndServe(metricsAddr, promhttp.Handler()); err != nil {
+			log.Panicf("error while serving metrics: %s", err)
+		}
+	}()
+
+	// Wait until some signal is captured.
+	sigC := make(chan os.Signal, 1)
+	signal.Notify(sigC, syscall.SIGTERM, syscall.SIGINT)
+	<-sigC
+
 	log.Fatal(http.ListenAndServe(":10010", router))
+
 }
