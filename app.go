@@ -42,6 +42,7 @@ func main() {
 	if err := redisotel.InstrumentMetrics(r); err != nil {
 		panic(err)
 	}
+	RegisterMetrics()
 
 	// Create our middleware.
 	mdlw := middleware.New(middleware.Config{
@@ -49,11 +50,8 @@ func main() {
 	})
 
 	router := httprouter.New()
-
 	router.GET("/healthz", httproutermiddleware.Handler("/healthz", HealthzHandler, mdlw))
-
 	router.GET("/", httproutermiddleware.Handler("/", GetPlaylistsHandler, mdlw))
-
 	fmt.Println("Running...")
 	// Serve our metrics.
 	go func() {
