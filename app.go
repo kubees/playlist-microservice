@@ -17,6 +17,7 @@ var redisHost = os.Getenv("REDIS_HOST")
 var redisPort = os.Getenv("REDIS_PORT")
 var videosApiHost = os.Getenv("VIDEOS_API_HOST")
 var videosApiPort = os.Getenv("VIDEOS_API_PORT")
+var password = os.Getenv("PASSWORD")
 var ctx = context.Background()
 var rdb *redis.Client
 
@@ -24,6 +25,7 @@ func main() {
 	r := redis.NewClient(&redis.Options{
 		Addr: redisHost + ":" + redisPort,
 		DB:   0,
+		Password: password,
 	})
 	rdb = r
 
