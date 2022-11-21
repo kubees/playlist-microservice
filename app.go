@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"net/http"
+	"os"
+
 	"github.com/go-redis/redis/extra/redisotel/v9"
 	"github.com/go-redis/redis/v9"
 	"github.com/julienschmidt/httprouter"
@@ -10,10 +13,6 @@ import (
 	metrics "github.com/slok/go-http-metrics/metrics/prometheus"
 	"github.com/slok/go-http-metrics/middleware"
 	httproutermiddleware "github.com/slok/go-http-metrics/middleware/httprouter"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 const metricsAddr = ":8000"
@@ -60,11 +59,6 @@ func main() {
 			log.Panicf("error while serving metrics: %s", err)
 		}
 	}()
-
-	// Wait until some signal is captured.
-	sigC := make(chan os.Signal, 1)
-	signal.Notify(sigC, syscall.SIGTERM, syscall.SIGINT)
-	<-sigC
 
 	log.Fatal(http.ListenAndServe(":10010", router))
 
