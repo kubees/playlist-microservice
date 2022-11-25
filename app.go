@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"go.uber.org/zap"
 	"net/http"
 	"os"
 
@@ -24,8 +24,12 @@ var videosApiHost = os.Getenv("VIDEOS_API_HOST")
 var videosApiPort = os.Getenv("VIDEOS_API_PORT")
 var password = os.Getenv("PASSWORD")
 var rdb redis.UniversalClient
+var Logger, _ = zap.NewProduction()
+var Sugar = Logger.Sugar()
 
 func main() {
+	defer Logger.Sync()
+
 	r := redis.NewUniversalClient(&redis.UniversalOptions{
 		Addrs:    []string{redisHost + ":" + redisPort},
 		DB:       0,
@@ -51,12 +55,12 @@ func main() {
 	router := httprouter.New()
 	router.GET("/healthz", httproutermiddleware.Handler("/healthz", HealthzHandler, mdlw))
 	router.GET("/", httproutermiddleware.Handler("/", GetPlaylistsHandler, mdlw))
-	fmt.Println("Running...")
+	Sugar.Infof("Running...")
 	// Serve our metrics.
 	go func() {
-		log.Printf("metrics listening at %s", metricsAddr)
+		Sugar.Infof("metrics listening at %s", metricsAddr)
 		if err := http.ListenAndServe(metricsAddr, promhttp.Handler()); err != nil {
-			log.Panicf("error while serving metrics: %s", err)
+			Sugar.Panicf("error while serving metrics: %s", err)
 		}
 	}()
 

@@ -24,7 +24,7 @@ func GetPlaylistsHandler(w http.ResponseWriter, r *http.Request, p httprouter.Pa
 	var playlists []Playlist
 	err := json.Unmarshal([]byte(playlistsJson), &playlists)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
+		Sugar.Errorf("Error while unmarshalling JSON file: %v\n", err)
 		return
 	}
 	PlaylistsMetrics(playlists)
@@ -37,13 +37,15 @@ func GetPlaylistsHandler(w http.ResponseWriter, r *http.Request, p httprouter.Pa
 
 	playlistsBytes, err := json.Marshal(playlists)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
+		Sugar.Errorf("Error while marshalling JSON file: %v\n", err)
 		return
 	}
 
 	reader := bytes.NewReader(playlistsBytes)
 	if b, err := ioutil.ReadAll(reader); err == nil {
 		fmt.Fprintf(w, "%s", string(b))
+	} else {
+		Sugar.Errorf("Error while reading data: %v\n", err)
 	}
 
 }
