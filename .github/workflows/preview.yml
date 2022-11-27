@@ -102,7 +102,7 @@ jobs:
           token: ${{ secrets.TOKEN }}
           path: ./e2e-test
           ref: main
-      - uses: actions/checkout@main
+      - uses: actions/checkout@v3
         with:
           repository: kubees/test-infra
           token: ${{ secrets.TOKEN }}
@@ -134,7 +134,8 @@ jobs:
         id: apply_infra
         working-directory: ./test-infra
         run: |
-          ls
+          cat microservices/videos-helm-chart/videos-helm-chart/Chart.yaml
+          cat microservices/videos-helm-chart/videos-helm-chart/Chart.lock
           terraform init
           terraform apply -auto-approve -var frontend_image_digest=${{ needs.release_frontend.outputs.frontend_sha }} \
             -var playlist_microservice_image_digest=${{ needs.release_playlist_ms.outputs.playlist_sha }} \
