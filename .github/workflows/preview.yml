@@ -137,9 +137,6 @@ jobs:
         with:
           version: "v0.11.1"
 
-      - name: Add umbrella chart
-        run: helm repo add microservices-umbrella-chart https://all-helm-repository.s3.eu-west-1.amazonaws.com/charts/
-
       - name: Apply infrastructure
         id: apply_infra
         working-directory: ./test-infra
