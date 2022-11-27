@@ -39,7 +39,7 @@ jobs:
     steps:
       - uses: actions/checkout@main
         with:
-          name: kubees/videos-microservice
+          repository: kubees/videos-microservice
           token: ${{ secrets.github_token }}
 
       - name: Set up QEMU
@@ -68,7 +68,7 @@ jobs:
     steps:
       - uses: actions/checkout@main
         with:
-          name: kubees/videos-webapp
+          repository: kubees/videos-webapp
           token: ${{ secrets.github_token }}
 
       - name: Set up QEMU
