@@ -1,2 +1,2 @@
 # playlist-microservice
-This is the playlist microservice.
+This is the playlist microservice application.
