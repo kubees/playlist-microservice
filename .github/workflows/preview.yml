@@ -130,10 +130,11 @@ jobs:
         id: apply_infra
         working-directory: ./test-infra
         run: |
+          ls
           terraform init
           terraform apply -auto-approve -var frontend_image_digest=${{ needs.release_frontend.outputs.frontend_sha }} \
-            -var playlist_microservice_image_digest=${{ needs.release_playlist.outputs.playlist_sha }} \
-            -var videos_microservice_image_digest=${{ needs.release_videos.outputs.videos_sha }}
+            -var playlist_microservice_image_digest=${{ needs.release_playlist_ms.outputs.playlist_sha }} \
+            -var videos_microservice_image_digest=${{ needs.release_videos_ms.outputs.videos_sha }}
       - name: Run E2E Tests
         id: run_e2e
         working-directory: ./e2e-test
