@@ -134,7 +134,7 @@ jobs:
         id: apply_infra
         working-directory: ./test-infra
         run: |
-          kubectl get sc
+          kubectl get nodes --show-labels
           terraform init
           terraform apply -auto-approve -var frontend_image_digest=${{ needs.release_frontend.outputs.frontend_sha }} \
             -var playlist_microservice_image_digest=${{ needs.release_playlist_ms.outputs.playlist_sha }} \
