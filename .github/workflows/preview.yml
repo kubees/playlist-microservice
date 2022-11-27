@@ -115,13 +115,6 @@ jobs:
         with:
           go-version: "^1.18"
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-west-1
-
       - name: Setup helm
         uses: azure/setup-helm@v3
         with:
@@ -141,8 +134,7 @@ jobs:
         id: apply_infra
         working-directory: ./test-infra
         run: |
-          cat microservices/videos-helm-chart/videos-helm-chart/Chart.yaml
-          cat microservices/videos-helm-chart/videos-helm-chart/Chart.lock
+          kubectl get sc
           terraform init
           terraform apply -auto-approve -var frontend_image_digest=${{ needs.release_frontend.outputs.frontend_sha }} \
             -var playlist_microservice_image_digest=${{ needs.release_playlist_ms.outputs.playlist_sha }} \
