@@ -40,7 +40,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           repository: kubees/videos-microservice
-          token: ${{ secrets.github_token }}
+          token: ${{ secrets.TOKEN }}
           ref: main
 
       - name: Set up QEMU
