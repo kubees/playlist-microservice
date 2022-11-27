@@ -96,12 +96,12 @@ jobs:
     steps:
       - uses: actions/checkout@main
         with:
-          name: kubees/e2e-test
+          repository: kubees/e2e-test
           token: ${{ secrets.github_token }}
           path: ./e2e-test
       - uses: actions/checkout@main
         with:
-          name: kubees/test-infra
+          repository: kubees/test-infra
           token: ${{ secrets.github_token }}
           submodules: true
           path: ./test-infra
@@ -114,7 +114,7 @@ jobs:
       - name: Setup helm
         uses: azure/setup-helm@v3
         with:
-          version: "v3.5.0" # default is latest (stable)
+          version: "v3.5.0"
 
       - name: Setup terraform
         uses: hashicorp/setup-terraform@v2
