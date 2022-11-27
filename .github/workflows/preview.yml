@@ -37,10 +37,11 @@ jobs:
     outputs:
       videos_sha: ${{ steps.release.outputs.digest }}
     steps:
-      - uses: actions/checkout@main
+      - uses: actions/checkout@v3
         with:
           repository: kubees/videos-microservice
           token: ${{ secrets.github_token }}
+          ref: main
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -66,10 +67,11 @@ jobs:
     outputs:
       frontend_sha: ${{ steps.release.outputs.digest }}
     steps:
-      - uses: actions/checkout@main
+      - uses: actions/checkout@v3
         with:
           repository: kubees/videos-webapp
-          token: ${{ secrets.github_token }}
+          token: ${{ secrets.TOKEN }}
+          ref: main
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -94,17 +96,19 @@ jobs:
     runs-on: ubuntu-latest
     needs: [release_playlist_ms, release_videos_ms, release_frontend]
     steps:
-      - uses: actions/checkout@main
+      - uses: actions/checkout@v3
         with:
           repository: kubees/e2e-test
-          token: ${{ secrets.github_token }}
+          token: ${{ secrets.TOKEN }}
           path: ./e2e-test
+          ref: main
       - uses: actions/checkout@main
         with:
           repository: kubees/test-infra
-          token: ${{ secrets.github_token }}
+          token: ${{ secrets.TOKEN }}
           submodules: true
           path: ./test-infra
+          ref: main
 
       - name: Setup golang
         uses: actions/setup-go@v3
