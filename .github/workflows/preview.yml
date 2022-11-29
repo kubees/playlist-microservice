@@ -43,6 +43,8 @@ jobs:
           token: ${{ secrets.TOKEN }}
           ref: main
 
+      - name: Debug
+        run: ls && cat README.md
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
@@ -72,7 +74,6 @@ jobs:
           repository: kubees/videos-webapp
           token: ${{ secrets.TOKEN }}
           ref: main
-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
