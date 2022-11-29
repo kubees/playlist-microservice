@@ -60,6 +60,7 @@ jobs:
         with:
           push: true
           tags: ahmedgrati/videos-ms:${{ github.sha }}
+          context: .
 
   release_frontend:
     if: |
@@ -74,8 +75,6 @@ jobs:
           repository: kubees/videos-webapp
           token: ${{ secrets.TOKEN }}
           ref: main
-      - name: Debug
-        run: ls && cat README.md
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
@@ -91,6 +90,7 @@ jobs:
         with:
           push: true
           tags: ahmedgrati/videos-webapp:${{ github.sha }}
+          context: .
 
   preview:
     if: |
