@@ -1,12 +1,9 @@
-name: ci
+name: release
 
 on:
   push:
     branches:
       - 'main'
-  pull_request:
-    types: [opened, reopened, synchronize]
-
 jobs:
   docker:
     runs-on: ubuntu-latest

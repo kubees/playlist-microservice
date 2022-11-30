@@ -1,0 +1,149 @@
+name: preview
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, labeled]
+
+env:
+  TF_VERSION: 1.3.0
+jobs:
+  release_playlist_ms:
+    runs-on: ubuntu-latest
+    outputs:
+      playlist_sha: ${{ steps.release.outputs.digest }}
+    steps:
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        id: release
+        with:
+          push: true
+          tags: ahmedgrati/playlist-ms:${{ github.sha }}
+
+      # Checkout to videos microservice and frontend repositories
+  release_videos_ms:
+    if: |
+      (github.event.action == 'labeled' && github.event.label.name == ':rocket: preview') ||
+      (github.event.action != 'labeled' && contains(github.event.pull_request.labels.*.name, ':rocket: preview'))
+    runs-on: ubuntu-latest
+    outputs:
+      videos_sha: ${{ steps.release.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: kubees/videos-microservice
+          token: ${{ secrets.TOKEN }}
+          ref: main
+
+      - name: Debug
+        run: ls && cat README.md
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        id: release
+        with:
+          push: true
+          tags: ahmedgrati/videos-ms:${{ github.sha }}
+          context: .
+
+  release_frontend:
+    if: |
+      (github.event.action == 'labeled' && github.event.label.name == ':rocket: preview') ||
+      (github.event.action != 'labeled' && contains(github.event.pull_request.labels.*.name, ':rocket: preview'))
+    runs-on: ubuntu-latest
+    outputs:
+      frontend_sha: ${{ steps.release.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: kubees/videos-webapp
+          token: ${{ secrets.TOKEN }}
+          ref: main
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        id: release
+        with:
+          push: true
+          tags: ahmedgrati/videos-webapp:${{ github.sha }}
+          context: .
+
+  preview:
+    if: |
+      (github.event.action == 'labeled' && github.event.label.name == ':rocket: preview') ||
+      (github.event.action != 'labeled' && contains(github.event.pull_request.labels.*.name, ':rocket: preview'))
+    runs-on: ubuntu-latest
+    needs: [release_playlist_ms, release_videos_ms, release_frontend]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: kubees/e2e-test
+          token: ${{ secrets.TOKEN }}
+          path: ./e2e-test
+          ref: main
+      - uses: actions/checkout@v3
+        with:
+          repository: kubees/test-infra
+          token: ${{ secrets.TOKEN }}
+          submodules: true
+          path: ./test-infra
+          ref: main
+
+      - name: Setup golang
+        uses: actions/setup-go@v3
+        with:
+          go-version: "^1.18"
+
+      - name: Setup helm
+        uses: azure/setup-helm@v3
+        with:
+          version: "v3.5.0"
+
+      - name: Setup terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Setup KinD Cluster
+        uses: engineerd/setup-kind@v0.5.0
+        with:
+          version: "v0.11.1"
+          config: ./test-infra/kind-config.yaml
+
+      - name: Apply infrastructure
+        id: apply_infra
+        working-directory: ./test-infra
+        run: |
+          terraform init
+          terraform apply -auto-approve -var frontend_image_digest=${{ needs.release_frontend.outputs.frontend_sha }} \
+            -var playlist_microservice_image_digest=${{ needs.release_playlist_ms.outputs.playlist_sha }} \
+            -var videos_microservice_image_digest=${{ needs.release_videos_ms.outputs.videos_sha }}
+      - name: Run E2E Tests
+        id: run_e2e
+        working-directory: ./e2e-test
+        run: |
+          go test ./... -coverprofile cover.out
