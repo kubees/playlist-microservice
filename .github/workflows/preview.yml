@@ -149,10 +149,7 @@ jobs:
           time: "180s"
       - name: Debug
         run: |
-          kubectl get pods -n microservices
-          kubectl describe pods -n microservices
-          kubectl get pods -n frontend
-          kubectl describe pods -n frontend
+          kubectl describe pods -n databases
           kubectl describe nodes
       - name: Run E2E Tests
         id: run_e2e
