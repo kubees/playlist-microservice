@@ -146,6 +146,4 @@ jobs:
         id: run_e2e
         working-directory: ./e2e-test
         run: |
-          kubectl get pods -n databases
-          kubectl describe sts -n databases
           go test ./... -coverprofile cover.out
