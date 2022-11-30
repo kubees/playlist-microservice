@@ -149,6 +149,7 @@ jobs:
           time: "180s"
       - name: Debug
         run: |
+          kubectl get pods -n databases
           kubectl describe pods -n databases
           kubectl describe nodes
       - name: Run E2E Tests
