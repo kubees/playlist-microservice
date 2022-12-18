@@ -11,12 +11,12 @@ import (
 
 	"github.com/go-redis/redis/v9"
 	"github.com/julienschmidt/httprouter"
+	"github.com/kubees/playlist-microservice/jaeger"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	metrics "github.com/slok/go-http-metrics/metrics/prometheus"
 	"github.com/slok/go-http-metrics/middleware"
 	httproutermiddleware "github.com/slok/go-http-metrics/middleware/httprouter"
-	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 )
 
 const metricsAddr = ":8000"
@@ -27,18 +27,12 @@ var redisPort = os.Getenv("REDIS_PORT")
 var videosApiHost = os.Getenv("VIDEOS_API_HOST")
 var videosApiPort = os.Getenv("VIDEOS_API_PORT")
 var password = os.Getenv("PASSWORD")
-var jaegerEndpoint = os.Getenv("JAEGER_ENDPOINT")
 var rdb redis.UniversalClient
 var Logger, _ = zap.NewProduction()
 var Sugar = Logger.Sugar()
-var traceProvider tracesdk.TracerProvider
+var traceProvider = jaeger.NewJaegerTracerProvider()
 
 func main() {
-	// Configure Opentelemtry Tracer
-	traceProvider, err := JeagerProvider(jaegerEndpoint)
-	if err != nil {
-		Sugar.Panic("Error while creating the Jaeger Tracing Provider")
-	}
 
 	// Register our TracerProvider as the global so any imported
 	// instrumentation in the future will default to using it.
@@ -56,7 +50,6 @@ func main() {
 			log.Fatal(err)
 		}
 	}(ctx)
-
 	defer Logger.Sync()
 
 	r := redis.NewUniversalClient(&redis.UniversalOptions{
