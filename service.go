@@ -8,14 +8,17 @@ import (
 	"net/http"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
-func GetPlaylists(ctx context.Context) (response string) {
+func GetPlaylists(ctx context.Context, id uuid.UUID, ip string) (response string) {
 	span := trace.SpanFromContext(ctx)
 	defer span.End()
 	span.SetAttributes(attribute.Key("Function").String("GetPlaylists"))
+	span.SetAttributes(attribute.Key("UUID").String(id.String()))
+	span.SetAttributes(attribute.Key("Client IP").String(ip))
 	playlistData, err := rdb.Get(ctx, "playlists").Result()
 
 	if err == redis.Nil {
@@ -30,10 +33,12 @@ func GetPlaylists(ctx context.Context) (response string) {
 	return playlistData
 }
 
-func GetVideosOfPlaylists(playlist Playlist, ctx context.Context) []Videos {
+func GetVideosOfPlaylists(playlist Playlist, ctx context.Context, id uuid.UUID, ip string) []Videos {
 	span := trace.SpanFromContext(ctx)
 	defer span.End()
 	span.SetAttributes(attribute.Key("Function").String("GetVideosOfPlaylist"))
+	span.SetAttributes(attribute.Key("UUID").String(id.String()))
+	span.SetAttributes(attribute.Key("Client IP").String(ip))
 	var vs []Videos
 	for vi := range playlist.Videos {
 
