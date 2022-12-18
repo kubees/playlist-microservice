@@ -1,11 +1,14 @@
 package main
 
 import (
-	"go.uber.org/zap"
+	"context"
 	"net/http"
 	"os"
+	"time"
 
-	"github.com/go-redis/redis/extra/redisotel/v9"
+	"go.opentelemetry.io/otel"
+	"go.uber.org/zap"
+
 	"github.com/go-redis/redis/v9"
 	"github.com/julienschmidt/httprouter"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -13,6 +16,7 @@ import (
 	metrics "github.com/slok/go-http-metrics/metrics/prometheus"
 	"github.com/slok/go-http-metrics/middleware"
 	httproutermiddleware "github.com/slok/go-http-metrics/middleware/httprouter"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 )
 
 const metricsAddr = ":8000"
@@ -23,11 +27,36 @@ var redisPort = os.Getenv("REDIS_PORT")
 var videosApiHost = os.Getenv("VIDEOS_API_HOST")
 var videosApiPort = os.Getenv("VIDEOS_API_PORT")
 var password = os.Getenv("PASSWORD")
+var jaegerEndpoint = os.Getenv("JAEGER_ENDPOINT")
 var rdb redis.UniversalClient
 var Logger, _ = zap.NewProduction()
 var Sugar = Logger.Sugar()
+var traceProvider tracesdk.TracerProvider
 
 func main() {
+	// Configure Opentelemtry Tracer
+	traceProvider, err := JeagerProvider(jaegerEndpoint)
+	if err != nil {
+		Sugar.Panic("Error while creating the Jaeger Tracing Provider")
+	}
+
+	// Register our TracerProvider as the global so any imported
+	// instrumentation in the future will default to using it.
+	otel.SetTracerProvider(traceProvider)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Cleanly shutdown and flush telemetry when the application exits.
+	defer func(ctx context.Context) {
+		// Do not make the application hang when it is shutdown.
+		ctx, cancel = context.WithTimeout(ctx, time.Second*5)
+		defer cancel()
+		if err := traceProvider.Shutdown(ctx); err != nil {
+			log.Fatal(err)
+		}
+	}(ctx)
+
 	defer Logger.Sync()
 
 	r := redis.NewUniversalClient(&redis.UniversalOptions{
@@ -36,15 +65,7 @@ func main() {
 		Password: password,
 	})
 	rdb = r
-	// Enable tracing instrumentation.
-	if err := redisotel.InstrumentTracing(r); err != nil {
-		panic(err)
-	}
 
-	// Enable metrics instrumentation.
-	if err := redisotel.InstrumentMetrics(r); err != nil {
-		panic(err)
-	}
 	RegisterMetrics()
 
 	// Create our middleware.
