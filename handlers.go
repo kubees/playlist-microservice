@@ -2,24 +2,44 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
+	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 func HealthzHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	tr := traceProvider.Tracer("playlist-ms-main-component")
+	id := uuid.New()
+	_, span := tr.Start(context.Background(), "healthz")
+	span.SetAttributes(attribute.Key("Protocol").String(r.Proto))
+	span.SetAttributes(attribute.Key("UUID").String(id.String()))
+	span.SetAttributes(attribute.Key("Client IP").String(strings.Split(r.RemoteAddr, ":")[0]))
+	defer span.End()
 	fmt.Fprintf(w, "ok!")
 }
 
 func GetPlaylistsHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	// to enable tracing:
-	ctx := r.Context()
+	tr := traceProvider.Tracer("playlist-ms-main-component")
+	ctx, span := tr.Start(context.Background(), "GET Playlist")
+	id := uuid.New()
+	ip := strings.Split(r.RemoteAddr, ":")[0]
+
+	defer span.End()
+
+	span.SetAttributes(attribute.Key("Function").String("GetPlaylistHandler"))
+	span.SetAttributes(attribute.Key("Protocol").String(r.Proto))
+	span.SetAttributes(attribute.Key("UUID").String(id.String()))
+	span.SetAttributes(attribute.Key("Client IP").String(strings.Split(r.RemoteAddr, ":")[0]))
 
 	Cors(w)
-	playlistsJson := GetPlaylists(ctx)
+	playlistsJson := GetPlaylists(ctx, id, ip)
 
 	var playlists []Playlist
 	err := json.Unmarshal([]byte(playlistsJson), &playlists)
@@ -31,7 +51,7 @@ func GetPlaylistsHandler(w http.ResponseWriter, r *http.Request, p httprouter.Pa
 
 	//get videos for each playlist from videos api
 	for pi := range playlists {
-		vs := GetVideosOfPlaylists(playlists[pi])
+		vs := GetVideosOfPlaylists(playlists[pi], ctx, id, ip)
 		playlists[pi].Videos = vs
 	}
 

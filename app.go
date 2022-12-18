@@ -1,13 +1,17 @@
 package main
 
 import (
-	"go.uber.org/zap"
+	"context"
 	"net/http"
 	"os"
+	"time"
 
-	"github.com/go-redis/redis/extra/redisotel/v9"
+	"go.opentelemetry.io/otel"
+	"go.uber.org/zap"
+
 	"github.com/go-redis/redis/v9"
 	"github.com/julienschmidt/httprouter"
+	"github.com/kubees/playlist-microservice/jaeger"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	metrics "github.com/slok/go-http-metrics/metrics/prometheus"
@@ -26,8 +30,26 @@ var password = os.Getenv("PASSWORD")
 var rdb redis.UniversalClient
 var Logger, _ = zap.NewProduction()
 var Sugar = Logger.Sugar()
+var traceProvider = jaeger.NewJaegerTracerProvider()
 
 func main() {
+
+	// Register our TracerProvider as the global so any imported
+	// instrumentation in the future will default to using it.
+	otel.SetTracerProvider(traceProvider)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Cleanly shutdown and flush telemetry when the application exits.
+	defer func(ctx context.Context) {
+		// Do not make the application hang when it is shutdown.
+		ctx, cancel = context.WithTimeout(ctx, time.Second*5)
+		defer cancel()
+		if err := traceProvider.Shutdown(ctx); err != nil {
+			log.Fatal(err)
+		}
+	}(ctx)
 	defer Logger.Sync()
 
 	r := redis.NewUniversalClient(&redis.UniversalOptions{
@@ -36,15 +58,7 @@ func main() {
 		Password: password,
 	})
 	rdb = r
-	// Enable tracing instrumentation.
-	if err := redisotel.InstrumentTracing(r); err != nil {
-		panic(err)
-	}
 
-	// Enable metrics instrumentation.
-	if err := redisotel.InstrumentMetrics(r); err != nil {
-		panic(err)
-	}
 	RegisterMetrics()
 
 	// Create our middleware.
