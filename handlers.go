@@ -27,7 +27,7 @@ func HealthzHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params)
 
 func GetPlaylistsHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	tr := traceProvider.Tracer("playlist-ms-main-component")
-	ctx, span := tr.Start(context.Background(), "GET Playlist")
+	ctx, span := tr.Start(context.Background(), "GET Playlist HTTP Handler")
 	id := uuid.New()
 	ip := strings.Split(r.RemoteAddr, ":")[0]
 
