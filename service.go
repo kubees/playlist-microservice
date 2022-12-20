@@ -10,11 +10,11 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 func GetPlaylists(ctx context.Context, id uuid.UUID, ip string) (response string) {
-	span := trace.SpanFromContext(ctx)
+	tr := traceProvider.Tracer("playlist-ms-main-component")
+	ctx, span := tr.Start(ctx, "GET Playlist From DB")
 	defer span.End()
 	span.SetAttributes(attribute.Key("Function").String("GetPlaylists"))
 	span.SetAttributes(attribute.Key("UUID").String(id.String()))
@@ -34,7 +34,8 @@ func GetPlaylists(ctx context.Context, id uuid.UUID, ip string) (response string
 }
 
 func GetVideosOfPlaylists(playlist Playlist, ctx context.Context, id uuid.UUID, ip string) []Videos {
-	span := trace.SpanFromContext(ctx)
+	tr := traceProvider.Tracer("playlist-ms-main-component")
+	ctx, span := tr.Start(ctx, "Fetch Videos from videos ms")
 	defer span.End()
 	span.SetAttributes(attribute.Key("Function").String("GetVideosOfPlaylist"))
 	span.SetAttributes(attribute.Key("UUID").String(id.String()))
