@@ -17,11 +17,14 @@ import (
 func HealthzHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	tr := traceProvider.Tracer("playlist-ms-main-component")
 	id := uuid.New()
+	ip := strings.Split(r.RemoteAddr, ":")[0]
 	_, span := tr.Start(context.Background(), "healthz")
 	span.SetAttributes(attribute.Key("Protocol").String(r.Proto))
 	span.SetAttributes(attribute.Key("UUID").String(id.String()))
-	span.SetAttributes(attribute.Key("Client IP").String(strings.Split(r.RemoteAddr, ":")[0]))
+	span.SetAttributes(attribute.Key("Client IP").String(ip))
 	defer span.End()
+	Sugar.Infof("client_ip: %v", ip)
+	Sugar.Infof("request_id: %v", id.String())
 	fmt.Fprintf(w, "ok!")
 }
 
@@ -30,6 +33,8 @@ func GetPlaylistsHandler(w http.ResponseWriter, r *http.Request, p httprouter.Pa
 	ctx, span := tr.Start(context.Background(), "GET Playlist")
 	id := uuid.New()
 	ip := strings.Split(r.RemoteAddr, ":")[0]
+	Sugar.Infof("client_ip: %v", ip)
+	Sugar.Infof("request_id: %v", id.String())
 
 	defer span.End()
 
